@@ -1,28 +1,34 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from "react";
+import { Provider } from "react-redux";
+
+import { store } from "./store";
+import * as actions from "./actions";
+
+import { NavBar } from "./components/navbar";
+import { Chat } from "./components/chat";
+import { Canvas } from "./components/canvas";
 
 class App extends Component {
+  componentDidMount() {
+    const name = prompt("name?");
+    if (!name) throw new Error("No name provided");
+
+    store.dispatch(actions.setName(name));
+  }
+
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.tsx</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
+      <Provider store={store}>
+        <NavBar />
+        <Container className="mt-2">
+          <Chat />
+          <Canvas />
+        </Container>
+      </Provider>
     );
   }
 }
+
+document.body.style.background = "#343a40";
 
 export default App;

@@ -1,16 +1,23 @@
 {
-  "name": "draw-test",
+  "name": "drawsocket2",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
     "@types/jest": "24.0.0",
-    "@types/node": "10.12.24",
-    "@types/react": "16.8.2",
-    "@types/react-dom": "16.8.0",
-    "react": "^16.8.1",
-    "react-dom": "^16.8.1",
-    "react-scripts": "2.1.4",
-    "typescript": "3.3.3"
+    "@types/node": "10.12.21",
+    "@types/react": "^16.8.1",
+    "@types/react-dom": "^16.0.11",
+    "@types/socket.io-client": "^1.4.32",
+    "bootstrap": "^4.2.1",
+    "react": "^16.8.0",
+    "react-bootstrap": "^1.0.0-beta.5",
+    "react-dom": "^16.8.0",
+    "react-redux": "^6.0.0",
+    "react-scripts": "2.1.3",
+    "redux": "^4.0.1",
+    "redux-thunk": "^2.3.0",
+    "socket.io-client": "^2.2.0",
+    "typescript": "3.3.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -26,5 +33,8 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "devDependencies": {
+    "@types/react-redux": "^7.0.1"
+  }
 }
