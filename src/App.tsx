@@ -1,8 +1,12 @@
 import React, { Component } from "react";
 import { Provider } from "react-redux";
 
+import Container from "react-bootstrap/Container";
+
 import { store } from "./store";
 import * as actions from "./actions";
+
+import { socketService } from "./services/socket";
 
 import { NavBar } from "./components/navbar";
 import { Chat } from "./components/chat";
@@ -14,6 +18,8 @@ class App extends Component {
     if (!name) throw new Error("No name provided");
 
     store.dispatch(actions.setName(name));
+    // store.dispatch(actions.startApp());
+    socketService.start();
   }
 
   render() {

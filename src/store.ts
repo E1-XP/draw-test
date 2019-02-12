@@ -20,7 +20,7 @@ export interface DrawingPoint {
 }
 
 export interface broadcastedDrawingPoints {
-  [key: string]: DrawingPoint[];
+  [key: string]: DrawingPoint[][];
 }
 
 export interface Canvas {
