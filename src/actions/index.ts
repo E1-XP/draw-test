@@ -1,7 +1,14 @@
 import { ActionCreator, Action } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { types } from "./types";
-import { Message, DrawingPoint, broadcastedDrawingPoints } from "./../store";
+import {
+  Message,
+  DrawingPoint,
+  broadcastedDrawingPoints,
+  State
+} from "./../store";
+
+import { socketService } from "./../services/socket";
 
 export const startApp = () => ({ type: types.APP_START });
 
@@ -11,6 +18,16 @@ export const setIsSocketConnected = (v: boolean) => ({
 });
 
 export const setName = (v: string) => ({ type: types.SET_NAME, payload: v });
+
+export const sendMessage: ActionCreator<ThunkAction<void, State, {}, any>> = (
+  v: Message
+) => (dispatch, getState) => {
+  const socket = socketService.get();
+  
+  dispatch(setMessage(v));
+
+  socket.emit("message", v);
+};
 
 export const setMessage = (v: Message) => ({
   type: types.SET_MESSAGE,
