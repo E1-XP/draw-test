@@ -9,12 +9,12 @@ import Card from "react-bootstrap/Card";
 import ListGroup from "react-bootstrap/ListGroup";
 
 import { Message, State } from "./../store";
-import { sendMessage } from "./../actions";
+import { setMessage } from "./../actions";
 
 interface Props {
   username: string;
   messages: Message[];
-  sendMessage: (v: Message) => void;
+  setMessage: (v: Message) => void;
 }
 
 export const Chat = connect(
@@ -22,13 +22,13 @@ export const Chat = connect(
     messages: chat.messages,
     username: user.username
   }),
-  { sendMessage }
-)(({ messages, sendMessage, username }: Props) => {
+  { setMessage }
+)(({ messages, setMessage, username }: Props) => {
   const [value, setValue] = React.useState("");
   const onChange = (e: any) => setValue(e.target.value);
 
   const handleClick = (e: any) => {
-    sendMessage({ text: value, author: username });
+    setMessage({ text: value, author: username });
     setValue("");
   };
 

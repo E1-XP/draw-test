@@ -8,8 +8,6 @@ import {
   State
 } from "./../store";
 
-import { socketService } from "./../services/socket";
-
 export const startApp = () => ({ type: types.APP_START });
 
 export const setIsSocketConnected = (v: boolean) => ({
@@ -18,16 +16,6 @@ export const setIsSocketConnected = (v: boolean) => ({
 });
 
 export const setName = (v: string) => ({ type: types.SET_NAME, payload: v });
-
-export const sendMessage: ActionCreator<ThunkAction<void, State, {}, any>> = (
-  v: Message
-) => (dispatch, getState) => {
-  const socket = socketService.get();
-  
-  dispatch(setMessage(v));
-
-  socket.emit("message", v);
-};
 
 export const setMessage = (v: Message) => ({
   type: types.SET_MESSAGE,
@@ -66,5 +54,15 @@ export const setBroadcastedDrawingPoint = (v: DrawingPoint) => ({
 
 export const setBroadcastedDrawingPoints = (v: broadcastedDrawingPoints) => ({
   type: types.SET_BROADCASTED_DRAWING_POINTS,
+  payload: v
+});
+
+export const setBroadcastedDrawingPointsGroup = (v: DrawingPoint[]) => ({
+  type: types.SET_BROADCASTED_DRAWING_POINTS_GROUP,
+  payload: v
+});
+
+export const setPointsCache = (v: DrawingPoint[][]) => ({
+  type: types.SET_POINTS_CACHE,
   payload: v
 });

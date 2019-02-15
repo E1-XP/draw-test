@@ -1,6 +1,8 @@
 import { createStore, Store, applyMiddleware, compose } from "redux";
 import thunk from "redux-thunk";
 
+import { socketMiddleware } from "./middlewares";
+
 import { rootReducer } from "./reducers";
 
 export interface User {
@@ -28,6 +30,7 @@ export interface Canvas {
   groupCount: number;
   drawingPoints: DrawingPoint[][];
   broadcastedDrawingPoints: broadcastedDrawingPoints;
+  drawingPointsCache: DrawingPoint[][];
 }
 
 export interface Message {
@@ -51,5 +54,5 @@ const composeEnhancers =
 
 export const store: Store<State> = createStore(
   rootReducer,
-  composeEnhancers(applyMiddleware(thunk))
+  composeEnhancers(applyMiddleware(thunk, socketMiddleware))
 );
