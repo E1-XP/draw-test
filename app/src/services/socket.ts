@@ -31,7 +31,9 @@ export const socketService = new class SocketService {
   };
 
   closeSocket = () => {
-    Socket.close();
+    if (!this.socket) return;
+
+    this.socket.close();
     store.dispatch(actions.setIsSocketConnected(false));
   };
 
@@ -64,16 +66,15 @@ export const socketService = new class SocketService {
 
   private handleDisconnect = () => {
     console.log("disconnected!");
+
+    store.dispatch(actions.setIsSocketConnected(false));
   };
 
   private handleInitialData = (data: InitData) => {
     store.dispatch(actions.setMessages(data.messages));
-
-    store.dispatch(actions.setDrawingPoints(data.drawingPoints));
     store.dispatch(
       actions.setBroadcastedDrawingPoints(data.broadcastedDrawingPoints)
     );
-    store.dispatch(actions.setGroupCount(data.drawingPoints.length));
   };
 
   private handleMessage = (data: Message) => {
@@ -87,7 +88,7 @@ export const socketService = new class SocketService {
   private handleDrawGroupCorrection = (data: DrawingPoint[]) => {
     console.log("replacing group");
     store.dispatch(actions.setBroadcastedDrawingPointsGroup(data));
-    store.dispatch(actions.setPointsCache([])); // ???????
+    store.dispatch(actions.setPointsCache([])); // TODO ???????
   };
 
   private handleDrawGroupValidation = (test: string) => {

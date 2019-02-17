@@ -38,8 +38,6 @@ export const canvasService = new class CanvasService {
     this.backCtx = backRef.getContext("2d");
 
     this.drawingService.initialize(ref, backRef, this.ctx!, this.backCtx!);
-
-    setTimeout(this.redrawBoth, 500);
   };
 
   onMouseUpOutsideBoard = () => {
@@ -58,15 +56,12 @@ export const canvasService = new class CanvasService {
       this.drawingService.createInitialDrawingPoints(e)
     );
     points.forEach(p => this.dispatch(actions.setDrawingPoint(p)));
-
-    this.redraw();
   };
 
   onMouseMove = (e: any) => {
     const point = <DrawingPoint>this.drawingService.createDrawingPoint(e);
 
     this.dispatch(actions.setDrawingPoint(point));
-    this.redraw();
   };
 
   onMouseUp = (e: any) => {
@@ -74,8 +69,6 @@ export const canvasService = new class CanvasService {
 
     this.dispatch(actions.setIsMouseDown(false));
     this.dispatch(actions.setGroupCount(groupCount + 1));
-
-    this.redraw();
   };
 
   redraw = () => {

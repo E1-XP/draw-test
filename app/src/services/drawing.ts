@@ -82,16 +82,12 @@ export const drawingService = new class DrawingService {
       const newCacheLen = combined.length - (combined.length % divisor);
       const newCache = combined.slice(0, newCacheLen);
 
-      console.log("calc new pcache", newCache.length);
       this.dispatch(actions.setPointsCache(newCache));
-      this.redrawBack();
 
       return combined.slice(newCacheLen);
     }
 
-    if (!cacheLen) return combined;
-
-    return combined.slice(cacheLen - 1);
+    return cacheLen ? combined.slice(cacheLen - 1) : combined;
   };
 
   private getCombinedDrawingPoints = () => {
@@ -124,11 +120,6 @@ export const drawingService = new class DrawingService {
     return cacheLen ? combineWithCache() : combineIfNoCache();
   };
 
-  private redrawBack = () => {
-    this.clearCanvas(this.backRef, this.backCtx);
-    this.renderCanvas(this.backCtx);
-  };
-
   clearCanvas = (ref = this.ref, ctx = this.ctx) => {
     if (!ref || !ctx) return;
 
@@ -148,8 +139,6 @@ export const drawingService = new class DrawingService {
       ctx === this.ctx
         ? this.setCacheAndGetCombinedDrawingPoints()
         : this.store.getState().canvas.drawingPointsCache;
-
-    console.log("toDraw:", toDraw.length, "main?", ctx === this.ctx);
 
     const draw = this.drawWithCtx(ctx);
 

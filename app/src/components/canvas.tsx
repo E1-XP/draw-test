@@ -1,12 +1,22 @@
-import React, { useRef, useEffect, forwardRef, Ref } from "react";
+import React, {
+  useRef,
+  useEffect,
+  forwardRef,
+  Ref,
+  useLayoutEffect
+} from "react";
 import { connect } from "react-redux";
 import throttle from "lodash/throttle";
 
-import { State } from "./../store";
+import { State, DrawingPoint, broadcastedDrawingPoints } from "./../store";
 
 import Card from "react-bootstrap/Card";
 
 import { canvasService } from "./../services/canvas";
+
+interface BackCanvasProps {
+  drawingPointsCache: DrawingPoint[][];
+}
 
 const BackCanvas = connect(
   ({ canvas }: State) => ({
@@ -16,31 +26,50 @@ const BackCanvas = connect(
   null,
   { forwardRef: true }
 )(
-  forwardRef((props, ref: Ref<HTMLCanvasElement>) => (
-    <canvas
-      ref={ref}
-      width={1280}
-      height={720}
-      style={{ border: "1px solid #999", width: "100%" }}
-    />
-  ))
+  forwardRef(
+    ({ drawingPointsCache }: BackCanvasProps, ref: Ref<HTMLCanvasElement>) => {
+      useLayoutEffect(() => {
+        canvasService.redrawBack();
+      }, [drawingPointsCache]);
+
+      return (
+        <canvas
+          ref={ref}
+          width={1280}
+          height={720}
+          style={{ border: "1px solid #999", width: "100%" }}
+        />
+      );
+    }
+  )
 );
 
 interface MainCanvasProps {
   isMouseDown: boolean;
+  drawingPoints: DrawingPoint[][];
+  broadcastedDrawingPoints: broadcastedDrawingPoints;
 }
 
 const MainCanvas = connect(
   ({ canvas }: State) => ({
-    isMouseDown: canvas.isMouseDown
+    isMouseDown: canvas.isMouseDown,
+    drawingPoints: canvas.drawingPoints,
+    broadcastedDrawingPoints: canvas.broadcastedDrawingPoints
   }),
   null,
   null,
   { forwardRef: true }
 )(
   forwardRef(
-    ({ isMouseDown }: MainCanvasProps, ref: Ref<HTMLCanvasElement>) => {
+    (
+      { isMouseDown, drawingPoints, broadcastedDrawingPoints }: MainCanvasProps,
+      ref: Ref<HTMLCanvasElement>
+    ) => {
       const { onMouseDown, onMouseMove, onMouseUp } = canvasService;
+
+      useLayoutEffect(() => {
+        canvasService.redraw();
+      }, [drawingPoints, broadcastedDrawingPoints]);
 
       return (
         <canvas

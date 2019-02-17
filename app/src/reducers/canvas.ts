@@ -66,9 +66,12 @@ export const canvasReducer: Reducer<Canvas> = (
         {},
         state.broadcastedDrawingPoints
       );
-      broadcastedDrawingPoints[user].map(arr =>
-        arr[0].group === group ? action.payload : arr
-      );
+
+      if (broadcastedDrawingPoints[user]) {
+        broadcastedDrawingPoints[user].map(arr =>
+          arr[0].group === group ? action.payload : arr
+        );
+      }
 
       return { ...state, broadcastedDrawingPoints };
     }
