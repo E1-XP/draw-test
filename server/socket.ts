@@ -1,24 +1,29 @@
+import { Socket } from "socket.io";
 import { db, DB, Message, DrawingPoints, DrawingPoint } from "./models";
 
 interface InitData {
   messages: Message[];
-  drawingPoints: DrawingPoint[][];
   broadcastedDrawingPoints: DrawingPoints;
-  groupCount?: number;
+}
+
+interface CorrectDataRequest {
+  user: string;
+  group: number;
+  id: number;
 }
 
 export const socketService = new class SocketService {
-  private socket;
+  private socket: Socket | null = null;
 
   constructor(private db: DB) {}
 
-  onConnect = socket => {
+  onConnect = (socket: Socket) => {
     this.socket = socket;
     const username = socket.handshake.query.user;
 
     console.log(`${username} connected`);
 
-    const omitUserReducer = (acc, itm) => {
+    const omitUserReducer = (acc: DrawingPoints, itm: string) => {
       if (itm !== username) acc[itm] = this.db.drawingPoints[itm];
       return acc;
     };
@@ -28,14 +33,10 @@ export const socketService = new class SocketService {
       {}
     );
 
-    const drawingPoints = this.db.drawingPoints[username] || [];
-
     const initData: InitData = {
       messages: this.db.messages,
-      drawingPoints,
       broadcastedDrawingPoints
     };
-    if (drawingPoints.length) initData.groupCount = drawingPoints.length;
 
     socket.emit("init", initData);
     console.log("emitted initial data");
@@ -43,7 +44,7 @@ export const socketService = new class SocketService {
     this.bindHandlers(socket);
   };
 
-  private bindHandlers = socket => {
+  private bindHandlers = (socket: Socket) => {
     socket.on("disconnect", this.onDisconnect);
 
     socket.on("message", this.onMessage);
@@ -56,21 +57,21 @@ export const socketService = new class SocketService {
   };
 
   private onDisconnect = () => {
-    const username = this.socket.handshake.query.user;
+    const username = this.socket!.handshake.query.user;
 
     console.log(`disconnected ${username}`);
   };
 
-  private onMessage = data => {
+  private onMessage = (data: Message) => {
     this.db.messages.push(data);
-    this.socket.broadcast.emit("message", data);
+    this.socket!.broadcast.emit("message", data);
   };
 
-  private onDraw = data => {
-    const username = this.socket.handshake.query.user;
+  private onDraw = (data: DrawingPoint) => {
+    const username = this.socket!.handshake.query.user;
     const { group } = data;
 
-    this.socket.broadcast.emit("draw", data);
+    this.socket!.broadcast.emit("draw", data);
 
     if (!this.db.drawingPoints[username]) {
       this.db.drawingPoints[username] = [];
@@ -84,24 +85,24 @@ export const socketService = new class SocketService {
   };
 
   private onDrawEnd = (data: DrawingPoint[]) => {
-    const username = this.socket.handshake.query.user;
+    const username = this.socket!.handshake.query.user;
 
     if (!this.isSameLengthAndOrder(data)) {
       this.db.drawingPoints[username][data[0].group] = data;
 
       console.log("incorrect data from sender!");
 
-      this.socket.broadcast.emit("drawgroupcorrection", data);
+      this.socket!.broadcast.emit("drawgroupcorrection", data);
     } else {
       const tstamps = data.map(point => point.date).join(".");
       const { group, user } = data[0];
       const test = `${user}|${group}|`.concat(tstamps);
 
-      this.socket.broadcast.emit("drawgroupcorrectiontest", test);
+      this.socket!.broadcast.emit("drawgroupcorrectiontest", test);
     }
   };
 
-  private onCorrectDataRequest = data => {
+  private onCorrectDataRequest = (data: CorrectDataRequest) => {
     const { user, group, id } = data;
 
     if (!this.db.drawingPoints[user]) return;
@@ -109,11 +110,11 @@ export const socketService = new class SocketService {
     const correctGroup = this.db.drawingPoints[user].find(
       arr => arr[0].group === group
     );
-    if (!correctGroup) throw new Error("Group not found.");
+    if (!correctGroup) return;
 
     console.log("sending update");
 
-    this.socket.emit(`sendcorrectdrawgroup/${id}`, correctGroup);
+    this.socket!.emit(`sendcorrectdrawgroup/${id}`, correctGroup);
   };
 
   private isSameLengthAndOrder = (data: DrawingPoint[]) => {
@@ -127,7 +128,7 @@ export const socketService = new class SocketService {
         )
       : -1;
 
-    if (idx === -1) throw new Error("Group not found.");
+    if (idx === -1) return true;
 
     if (data.length !== this.db.drawingPoints[user][idx].length) return false;
 

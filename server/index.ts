@@ -1,4 +1,4 @@
-import * as express from "express";
+import express from "express";
 import socket from "socket.io";
 
 import { socketService } from "./socket";
