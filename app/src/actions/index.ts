@@ -1,5 +1,3 @@
-import { ActionCreator, Action } from "redux";
-import { ThunkAction } from "redux-thunk";
 import { types } from "./types";
 import {
   Message,
@@ -54,6 +52,11 @@ export const setBroadcastedDrawingPoint = (v: DrawingPoint) => ({
 
 export const setBroadcastedDrawingPoints = (v: broadcastedDrawingPoints) => ({
   type: types.SET_BROADCASTED_DRAWING_POINTS,
+  payload: v
+});
+
+export const setBroadcastedUserDrawingPoints = (v: DrawingPoint[][]) => ({
+  type: types.SET_BROADCASTED_USER_DRAWING_POINTS,
   payload: v
 });
 

@@ -59,6 +59,17 @@ export const canvasReducer: Reducer<Canvas> = (
 
       return { ...state, broadcastedDrawingPoints };
     }
+    case types.SET_BROADCASTED_USER_DRAWING_POINTS: {
+      const { user } = action.payload[0][0];
+
+      const broadcastedDrawingPoints = Object.assign(
+        {},
+        state.broadcastedDrawingPoints
+      );
+      broadcastedDrawingPoints[user] = action.payload;
+
+      return { ...state, broadcastedDrawingPoints };
+    }
     case types.SET_BROADCASTED_DRAWING_POINTS_GROUP: {
       const { user, group } = action.payload;
 

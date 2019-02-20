@@ -1,7 +1,8 @@
 import { Middleware } from "redux";
-import { State } from "./../store";
 
+import { State } from "./../store";
 import { types } from "./../actions/types";
+
 import { socketService } from "./../services/socket";
 
 export const socketMiddleware: Middleware<
@@ -10,11 +11,12 @@ export const socketMiddleware: Middleware<
 > = store => next => action => {
   switch (action.type) {
     case types.SET_MESSAGE: {
-      socketService.get().emit("message", action.payload);
+      socketService.get().emit("MESSAGE", action.payload);
       break;
     }
     case types.SET_DRAWING_POINT: {
-      socketService.get().emit("draw", action.payload);
+      console.log("drawing");
+      socketService.get().emit("DRAW", action.payload);
       break;
     }
     case types.SET_IS_MOUSE_DOWN: {
@@ -24,8 +26,14 @@ export const socketMiddleware: Middleware<
         const lastGroup = drawingPoints.find(
           arr => arr && arr[0] && arr[0].group === groupCount
         );
-        // TODO ?
-        if (lastGroup) socketService.get().emit("drawend", lastGroup);
+
+        if (lastGroup && lastGroup.length && lastGroup.every(itm => !!itm)) {
+          const { user, group } = lastGroup[0];
+          const tstamps = lastGroup.map(point => point.date).join(".");
+          const groupToStr = `${user}|${group}|`.concat(tstamps);
+
+          socketService.get().emit("DRAW_END", groupToStr);
+        }
       }
       break;
     }
