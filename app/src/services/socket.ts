@@ -1,4 +1,4 @@
-import { connect, Socket } from "socket.io-client";
+import { connect } from "socket.io-client";
 
 import {
   store,
@@ -14,12 +14,17 @@ interface InitData {
   broadcastedDrawingPoints: broadcastedDrawingPoints;
 }
 
+interface CorrectGroupRequest {
+  user: string;
+  group: number;
+}
+
 export const socketService = new class SocketService {
   private socket: SocketIOClient.Socket | undefined;
 
   private API_URL = "http://localhost:3001";
 
-  start = () => {
+  start() {
     const state = store.getState();
 
     this.socket = connect(
@@ -27,71 +32,108 @@ export const socketService = new class SocketService {
       { query: `user=${state.user.username}` }
     );
 
-    this.socket.on("connect", this.handleConnect);
-  };
+    this.socket.on("connect", this.handleConnect.bind(this));
+  }
 
-  closeSocket = () => {
+  closeSocket() {
     if (!this.socket) return;
 
     this.socket.close();
     store.dispatch(actions.setIsSocketConnected(false));
-  };
+  }
 
-  get = () => {
+  get() {
     if (!this.socket) throw new Error("socket is undefined");
     return this.socket;
-  };
+  }
 
-  private subscribeToEvents = () => {
+  private subscribeToEvents() {
     if (!this.socket) throw new Error("Socket is not connected!");
 
-    this.socket.on("disconnect", this.handleDisconnect);
+    this.socket.on("disconnect", this.handleDisconnect.bind(this));
 
-    this.socket.on("init", this.handleInitialData);
+    this.socket.on("INIT", this.handleInitialData.bind(this));
 
-    this.socket.on("message", this.handleMessage);
+    this.socket.on("SET_USER_DRAW_DATA", this.handleSetUserDrawData.bind(this));
 
-    this.socket.on("draw", this.handleDrawingBroadcast);
+    this.socket.on("MESSAGE", this.handleMessage.bind(this));
 
-    this.socket.on("drawgroupcorrection", this.handleDrawGroupCorrection);
+    this.socket.on("DRAW", this.handleDrawingBroadcast.bind(this));
 
-    this.socket.on("drawgroupcorrectiontest", this.handleDrawGroupValidation);
-  };
+    this.socket.on(
+      "DRAW_GROUP_CORRECTION",
+      this.handleDrawGroupCorrection.bind(this)
+    );
 
-  private handleConnect = () => {
+    this.socket.on(
+      "DRAW_GROUP_CORRECTION_TEST",
+      this.handleDrawGroupValidation.bind(this)
+    );
+
+    this.socket.on(
+      "SEND_CORRECT_DRAW_GROUP",
+      this.handleSendCorrectGroupToServer.bind(this)
+    );
+  }
+
+  private handleConnect() {
     this.subscribeToEvents();
 
     store.dispatch(actions.setIsSocketConnected(true));
-  };
+  }
 
-  private handleDisconnect = () => {
+  private handleDisconnect() {
     console.log("disconnected!");
 
     store.dispatch(actions.setIsSocketConnected(false));
-  };
+  }
 
-  private handleInitialData = (data: InitData) => {
+  private handleInitialData(data: InitData) {
+    const { drawingPoints } = store.getState().canvas;
+
+    if (drawingPoints.length) {
+      this.socket!.emit("SEND_DRAW_DATA_ON_RECONNECT", drawingPoints);
+    }
+
     store.dispatch(actions.setMessages(data.messages));
     store.dispatch(
       actions.setBroadcastedDrawingPoints(data.broadcastedDrawingPoints)
     );
-  };
+  }
 
-  private handleMessage = (data: Message) => {
+  private handleMessage(data: Message) {
     store.dispatch(actions.setMessage(data));
-  };
+  }
 
-  private handleDrawingBroadcast = (data: DrawingPoint) => {
+  private handleSetUserDrawData(data: DrawingPoint[][]) {
+    store.dispatch(actions.setBroadcastedUserDrawingPoints(data));
+  }
+
+  private handleDrawingBroadcast(data: DrawingPoint) {
+    console.log("received");
     store.dispatch(actions.setBroadcastedDrawingPoint(data));
-  };
+  }
 
-  private handleDrawGroupCorrection = (data: DrawingPoint[]) => {
+  private handleDrawGroupCorrection(data: DrawingPoint[]) {
     console.log("replacing group");
     store.dispatch(actions.setBroadcastedDrawingPointsGroup(data));
     store.dispatch(actions.setPointsCache([])); // TODO ???????
-  };
+  }
 
-  private handleDrawGroupValidation = (test: string) => {
+  private handleSendCorrectGroupToServer(data: CorrectGroupRequest) {
+    const { user, group } = data;
+    const { drawingPoints } = store.getState().canvas;
+
+    const correctGroup = drawingPoints.find(
+      arr => arr && arr[0] && arr[0].group === group
+    );
+
+    if (correctGroup) {
+      this.socket!.emit("SEND_CORRECT_DRAW_GROUP", correctGroup);
+    }
+  }
+
+  private handleDrawGroupValidation(test: string) {
     const {
       broadcastedDrawingPoints,
       drawingPointsCache
@@ -120,24 +162,21 @@ export const socketService = new class SocketService {
 
       const data = { user, group, id: Date.now() };
 
-      this.socket!.emit("correctdatarequest", data);
+      this.socket!.emit("CORRECT_DATA_REQUEST", data);
 
-      this.socket!.once(
-        `sendcorrectdrawgroup/${data.id}`,
-        (correctGroup: DrawingPoint[]) => {
-          const cacheIdx = drawingPointsCache.findIndex(
-            arr => arr && arr[0].group === Number(group) && arr[0].user === user
-          );
+      const setCorrectGroup = (correctGroup: DrawingPoint[]) => {
+        const cacheIdx = drawingPointsCache.findIndex(
+          arr => arr && arr[0].group === Number(group) && arr[0].user === user
+        );
 
-          if (cacheIdx !== -1) {
-            store.dispatch(actions.setPointsCache([]));
-          }
-
-          store.dispatch(
-            actions.setBroadcastedDrawingPointsGroup(correctGroup)
-          );
+        if (cacheIdx !== -1) {
+          store.dispatch(actions.setPointsCache([]));
         }
-      );
+
+        store.dispatch(actions.setBroadcastedDrawingPointsGroup(correctGroup));
+      };
+
+      this.socket!.once(`SEND_CORRECT_DRAW_GROUP/${data.id}`, setCorrectGroup);
     }
-  };
+  }
 }();
